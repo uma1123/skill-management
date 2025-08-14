@@ -1,0 +1,20 @@
+# Node.js関連
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ビルド成果物
+dist/
+
+# 環境変数ファイル
+.env
+.env.local
+.env.*.local
+
+# OSやエディタ関連
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
