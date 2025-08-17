@@ -1,25 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@radix-ui/react-label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 import React, { useState } from "react";
 
 export default function Login() {
-  const [name, setName] = useState("");
-  const [grade, setGrade] = useState("");
-  const [studentId, setStudentId] = useState("");
-  const [faculty, setFaculty] = useState("");
-  const [department, setDepartment] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState(""); // 氏名
+  const [grade, setGrade] = useState(""); // 学年
+  const [studentId, setStudentId] = useState(""); // 学生ID
+  const [faculty, setFaculty] = useState(""); // 学部
+  const [department, setDepartment] = useState(""); // 学科
+  const [password, setPassword] = useState(""); // パスワード
 
+  // 新規登録のフォーム送信ハンドラー
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -49,45 +45,164 @@ export default function Login() {
   };
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Login to your account</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form>
-          <div className="flex flex-col gap-6">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <a
-                  href="#"
-                  className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-              <Input id="password" type="password" required />
-            </div>
-          </div>
-        </form>
-      </CardContent>
-      <CardFooter className="flex-col gap-2">
-        <Button type="submit" className="w-full">
-          Login
-        </Button>
-        <Button variant="outline" className="w-full">
-          Login with Google
-        </Button>
-      </CardFooter>
-    </Card>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+      <div className="w-full max-w-lg">
+        <Card className="w-full shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-3xl font-bold text-gray-800">
+              スキル管理
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-8 py-6">
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login" className="text-base">
+                  ログイン
+                </TabsTrigger>
+                <TabsTrigger value="register" className="text-base">
+                  新規登録
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="login" className="space-y-5">
+                <form className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      メールアドレス
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="メールアドレスを入力"
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium">
+                      パスワード
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="パスワードを入力"
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-11 text-base font-medium"
+                  >
+                    ログイン
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="register" className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      氏名
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="氏名を入力"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="studentId" className="text-sm font-medium">
+                      学籍番号
+                    </Label>
+                    <Input
+                      id="studentId"
+                      placeholder="学籍番号を入力"
+                      value={studentId}
+                      onChange={(e) => setStudentId(e.target.value)}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="faculty" className="text-sm font-medium">
+                        学部
+                      </Label>
+                      <Input
+                        id="faculty"
+                        placeholder="学部を入力"
+                        value={faculty}
+                        onChange={(e) => setFaculty(e.target.value)}
+                        className="h-11"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="department"
+                        className="text-sm font-medium"
+                      >
+                        学科
+                      </Label>
+                      <Input
+                        id="department"
+                        placeholder="学科を入力"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="h-11"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="grade" className="text-sm font-medium">
+                      学年
+                    </Label>
+                    <Input
+                      id="grade"
+                      type="number"
+                      placeholder="学年を入力"
+                      min="1"
+                      max="4"
+                      value={grade}
+                      onChange={(e) => setGrade(e.target.value)}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="registerPassword"
+                      className="text-sm font-medium"
+                    >
+                      パスワード
+                    </Label>
+                    <Input
+                      id="registerPassword"
+                      type="password"
+                      placeholder="パスワードを入力"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-11 text-base font-medium mt-6"
+                  >
+                    新規登録
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
