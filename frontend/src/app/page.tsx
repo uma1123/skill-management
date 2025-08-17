@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function Home() {
-  return <div>ここにログイン画面を追加する</div>;
+  redirect("/login");
 }
