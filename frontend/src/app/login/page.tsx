@@ -15,6 +15,24 @@ export default function Login() {
   const [department, setDepartment] = useState(""); // 学科
   const [password, setPassword] = useState(""); // パスワード
 
+  const [loginStudentId, setLoginStudentId] = useState(""); // ログイン用学籍番号
+  const [loginPassword, setLoginPassword] = useState(""); // ログイン用パスワード
+
+  // フォームのクリア
+  const clearRegisterForm = () => {
+    setName("");
+    setGrade("");
+    setStudentId("");
+    setFaculty("");
+    setDepartment("");
+    setPassword("");
+  };
+
+  const clearLoginForm = () => {
+    setLoginStudentId("");
+    setLoginPassword("");
+  };
+
   // 新規登録のフォーム送信ハンドラー
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,10 +55,42 @@ export default function Login() {
 
       const data = await res.json();
       console.log("Response:", data);
-      alert(data.message);
+      alert("登録が完了しました");
+
+      if (res.ok) {
+        clearRegisterForm();
+      }
     } catch (error) {
       console.error("Error:", error);
       alert("登録に失敗しました");
+    }
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:3001/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          studentId: loginStudentId,
+          password: loginPassword,
+        }),
+      });
+
+      const data = await res.json();
+      console.log("Login Response:", data);
+      alert("ログインが成功しました");
+
+      if (res.ok) {
+        clearLoginForm();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("ログインに失敗しました");
     }
   };
 
@@ -65,15 +115,15 @@ export default function Login() {
               </TabsList>
 
               <TabsContent value="login" className="space-y-5">
-                <form className="space-y-5">
+                <form onSubmit={handleLoginSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      メールアドレス
+                    <Label htmlFor="studentId" className="text-sm font-medium">
+                      学籍番号
                     </Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="メールアドレスを入力"
+                      id="studentId"
+                      type="text"
+                      placeholder="学籍番号を入力"
                       className="h-11"
                       required
                     />
