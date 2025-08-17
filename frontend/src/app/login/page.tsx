@@ -55,7 +55,7 @@ export default function Login() {
 
       const data = await res.json();
       console.log("Response:", data);
-      alert("登録が完了しました");
+      alert(data.message);
 
       if (res.ok) {
         clearRegisterForm();
@@ -66,6 +66,7 @@ export default function Login() {
     }
   };
 
+  // ログインのフォーム送信ハンドラー
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -83,10 +84,14 @@ export default function Login() {
 
       const data = await res.json();
       console.log("Login Response:", data);
-      alert("ログインが成功しました");
+      alert(data.message);
 
       if (res.ok) {
+        localStorage.setItem("token", data.token); // トークンをローカルストレージに保存
+        localStorage.setItem("user", JSON.stringify(data.user)); // ユーザーデータを保存
         clearLoginForm();
+
+        // TODO: ダッシュページにリダイレクトする
       }
     } catch (error) {
       console.error("Error:", error);
@@ -117,25 +122,35 @@ export default function Login() {
               <TabsContent value="login" className="space-y-5">
                 <form onSubmit={handleLoginSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="studentId" className="text-sm font-medium">
+                    <Label
+                      htmlFor="loginStudentId"
+                      className="text-sm font-medium"
+                    >
                       学籍番号
                     </Label>
                     <Input
-                      id="studentId"
+                      id="loginStudentId"
                       type="text"
                       placeholder="学籍番号を入力"
+                      value={loginStudentId}
+                      onChange={(e) => setLoginStudentId(e.target.value)}
                       className="h-11"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium">
+                    <Label
+                      htmlFor="loginPassword"
+                      className="text-sm font-medium"
+                    >
                       パスワード
                     </Label>
                     <Input
-                      id="password"
+                      id="loginPassword"
                       type="password"
                       placeholder="パスワードを入力"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
                       className="h-11"
                       required
                     />
