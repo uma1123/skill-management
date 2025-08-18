@@ -38,7 +38,8 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3001/api/users", {
+      // 新しいエンドポイントに変更
+      const res = await fetch("http://localhost:3001/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -58,7 +59,12 @@ export default function Login() {
       alert(data.message);
 
       if (res.ok) {
+        // トークンも保存
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
         clearRegisterForm();
+
+        // TODO: ダッシュボードページにリダイレクト
       }
     } catch (error) {
       console.error("Error:", error);
@@ -71,7 +77,8 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3001/api/login", {
+      // 新しいエンドポイントに変更
+      const res = await fetch("http://localhost:3001/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,11 +94,11 @@ export default function Login() {
       alert(data.message);
 
       if (res.ok) {
-        localStorage.setItem("token", data.token); // トークンをローカルストレージに保存
-        localStorage.setItem("user", JSON.stringify(data.user)); // ユーザーデータを保存
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
         clearLoginForm();
 
-        // TODO: ダッシュページにリダイレクトする
+        // TODO: ダッシュボードページにリダイレクト
       }
     } catch (error) {
       console.error("Error:", error);
