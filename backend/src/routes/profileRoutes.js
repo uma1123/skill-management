@@ -1,10 +1,10 @@
 import express from "express";
-import { requireAuth } from "../middleware/auth.js"; // .js拡張子を追加
+import { requireAuth } from "../middleware/auth.js";
 import {
   getMyProfile,
   getUserProfile,
   updateMyProfile,
-} from "../controllers/profileController.js"; // .js拡張子を追加とupdateMyProfileを追加
+} from "../controllers/profileController.js";
 
 const router = express.Router();
 
