@@ -11,6 +11,7 @@ import bodyParser from "body-parser";
 
 // ルートをインポート
 import authRoutes from "./routes/authRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 // Expressアプリケーションを作成
 const app = express();
@@ -22,8 +23,9 @@ app.use(bodyParser.json());
 
 // ルートを設定
 app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
 
-// 404エラーハンドリング（修正）
+// 404エラーハンドリング
 app.use((req, res) => {
   res.status(404).json({
     error: "エンドポイントが見つかりません",
@@ -32,7 +34,7 @@ app.use((req, res) => {
   });
 });
 
-// エラーハンドリングミドルウェア（追加）
+// エラーハンドリングミドルウェア
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
   res.status(500).json({
