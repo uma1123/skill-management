@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
   const [name, setName] = useState(""); // 氏名
@@ -17,6 +18,7 @@ export default function Login() {
 
   const [loginStudentId, setLoginStudentId] = useState(""); // ログイン用学籍番号
   const [loginPassword, setLoginPassword] = useState(""); // ログイン用パスワード
+  const router = useRouter();
 
   // フォームのクリア
   const clearRegisterForm = () => {
@@ -65,6 +67,7 @@ export default function Login() {
         clearRegisterForm();
 
         // TODO: ダッシュボードページにリダイレクト
+        router.push("/dashboard");
       }
     } catch (error) {
       console.error("Error:", error);
