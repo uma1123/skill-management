@@ -1,6 +1,11 @@
+import allSkills from "../data/skill.js";
+
 // 仮のデータベース
 let users = [];
 let nextId = 1;
+
+// ユーザースキル
+let userSkills = [];
 
 export const dataStore = {
   // ユーザー情報
@@ -70,6 +75,87 @@ export const dataStore = {
       updatedAt: new Date().toISOString(),
     };
     return users[userIndex];
+  },
+
+  // スキル関連メソッド
+  // 全スキル取得
+  getAllSkills: () => allSkills,
+
+  // カテゴリ別スキル取得
+  getSkillsByCategory: () => {
+    const categories = {};
+    allSkills.forEach((skill) => {
+      if (!categories[skill.category]) {
+        categories[skill.category] = [];
+      }
+      categories[skill.category].push(skill);
+    });
+    return categories;
+  },
+
+  // スキルID検索
+  getSkillById: (skillId) => {
+    return allSkills.find((skill) => skill.id === parseInt(skillId));
+  },
+
+  // ユーザースキル詳細取得
+  getUserSkillsWithDetails: (userId) => {
+    const userSkillsList = userSkills.filter(
+      (us) => us.userId === parseInt(userId)
+    );
+    return userSkillsList.map((us) => {
+      const skill = allSkills.find((s) => s.id === us.skillId);
+      return {
+        ...us,
+        skillName: skill?.name || "不明",
+        skillCategory: skill?.category || "不明",
+      };
+    });
+  },
+
+  // ユーザースキル追加・更新
+  addOrUpdateUserSkill: (userId, skillData) => {
+    const existingIndex = userSkills.findIndex(
+      (us) =>
+        us.userId === parseInt(userId) &&
+        us.skillId === parseInt(skillData.skillId)
+    );
+
+    const newUserSkill = {
+      userId: parseInt(userId),
+      skillId: parseInt(skillData.skillId),
+      level: parseInt(skillData.level),
+      yearsOfExperience: parseFloat(skillData.yearsOfExperience || 0),
+      description: skillData.description || "",
+      createdAt:
+        existingIndex === -1
+          ? new Date().toISOString()
+          : userSkills[existingIndex].createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (existingIndex !== -1) {
+      // 更新
+      userSkills[existingIndex] = newUserSkill;
+    } else {
+      // 新規追加
+      userSkills.push(newUserSkill);
+    }
+
+    return newUserSkill;
+  },
+
+  // ユーザースキル削除
+  removeUserSkill: (userId, skillId) => {
+    const index = userSkills.findIndex(
+      (us) => us.userId === parseInt(userId) && us.skillId === parseInt(skillId)
+    );
+
+    if (index !== -1) {
+      const removed = userSkills.splice(index, 1)[0];
+      return removed;
+    }
+    return null;
   },
 
   getNextId: () => nextId,
