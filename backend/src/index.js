@@ -13,6 +13,7 @@ import bodyParser from "body-parser";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import skillRoutes from "./routes/skillRoutes.js";
+import memberRoutes from "./routes/memberRoutes.js";
 
 // Expressアプリケーションを作成
 const app = express();
@@ -26,6 +27,7 @@ app.use(bodyParser.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/skills", skillRoutes);
+app.use("/api/members", memberRoutes);
 // 404エラーハンドリング
 app.use((req, res) => {
   res.status(404).json({
