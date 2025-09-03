@@ -158,6 +158,15 @@ export const dataStore = {
     return null;
   },
 
+  // 全ユーザースキルを取得
+  getAllUserSkills: () => userSkills,
+
+  // ユーザーIDでユーザーを取得
+  getUserById: (userId) => users.find((user) => user.id === userId),
+
+  // 全ユーザーを取得
+  getUsers: () => users,
+
   getNextId: () => nextId,
   setNextId: (id) => {
     nextId = id;
