@@ -204,19 +204,19 @@ export const dataStore = {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    console.log("最近の更新スキル取得:", { userId, days, cutoffDate });
+    //console.log("最近の更新スキル取得:", { userId, days, cutoffDate });
 
     const recentSkills = userSkills
       .filter((us) => {
         const isCorrectUser = us.userId === parseInt(userId);
         const isRecent = new Date(us.updatedAt) > cutoffDate;
-        console.log("スキルチェック:", {
-          skillId: us.skillId,
-          userId: us.userId,
-          updatedAt: us.updatedAt,
-          isCorrectUser,
-          isRecent,
-        });
+        // console.log("スキルチェック:", {
+        //   skillId: us.skillId,
+        //   userId: us.userId,
+        //   updatedAt: us.updatedAt,
+        //   isCorrectUser,
+        //   isRecent,
+        // });
         return isCorrectUser && isRecent;
       })
       .sort(
@@ -224,12 +224,12 @@ export const dataStore = {
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       );
 
-    console.log("フィルタ後の最近のスキル:", recentSkills);
+    //console.log("フィルタ後の最近のスキル:", recentSkills);
 
     // スキル詳細情報を追加
     const recentSkillsWithDetails = recentSkills.map((userSkill) => {
       const skillDetails = allSkills.find((s) => s.id === userSkill.skillId);
-      console.log(`スキルID ${userSkill.skillId} の詳細:`, skillDetails);
+      //console.log(`スキルID ${userSkill.skillId} の詳細:`, skillDetails);
 
       return {
         ...userSkill,
@@ -238,7 +238,7 @@ export const dataStore = {
       };
     });
 
-    console.log("詳細付き最近のスキル:", recentSkillsWithDetails);
+    //console.log("詳細付き最近のスキル:", recentSkillsWithDetails);
     return recentSkillsWithDetails;
   },
 
