@@ -1,255 +1,275 @@
 import { dataStore } from "../utils/dataStore.js";
 
-// 全メンバーの情報とスキルを取得
+// 自己分析用データ取得
+export const getSelfAnalysis = (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log("自己分析データ取得 - ユーザーID:", userId);
+
+    const userSkills = dataStore.getUserSkillsWithDetails(userId);
+    console.log("取得したユーザースキル:", userSkills);
+
+    const skillHistory = dataStore.getSkillHistory(userId);
+
+    // getRecentSkillUpdatesは既に詳細情報が含まれている
+    const recentUpdates = dataStore.getRecentSkillUpdates(userId, 30);
+    console.log("最近の更新スキル（詳細付き）:", recentUpdates);
+
+    // カテゴリ別平均レベル
+    const categoryAverages = {};
+
+    userSkills.forEach((skill) => {
+      if (!categoryAverages[skill.skillCategory]) {
+        categoryAverages[skill.skillCategory] = {
+          totalLevel: 0,
+          totalExperience: 0,
+          count: 0,
+          skills: [],
+        };
+      }
+      categoryAverages[skill.skillCategory].totalLevel += skill.level;
+      categoryAverages[skill.skillCategory].totalExperience +=
+        skill.yearsOfExperience;
+      categoryAverages[skill.skillCategory].count++;
+      categoryAverages[skill.skillCategory].skills.push(skill);
+    });
+
+    // 平均値計算
+    Object.keys(categoryAverages).forEach((category) => {
+      const data = categoryAverages[category];
+      categoryAverages[category].averageLevel = (
+        data.totalLevel / data.count
+      ).toFixed(1);
+      categoryAverages[category].averageExperience = (
+        data.totalExperience / data.count
+      ).toFixed(1);
+    });
+
+    // バランスタイプ判定
+    const balanceType = analyzeBalanceType(categoryAverages);
+
+    // 成長傾向分析
+    const growthTrends = analyzeGrowthTrends(skillHistory, userSkills);
+
+    // 伸びしろ分析
+    const potentialAnalysis = analyzePotential(userSkills);
+
+    const responseData = {
+      userSkills,
+      categoryAverages,
+      skillHistory,
+      recentUpdates, // 既に詳細情報が含まれている
+      balanceType,
+      growthTrends,
+      potentialAnalysis,
+      message: "自己分析データを取得しました",
+    };
+
+    console.log("レスポンスデータ:", responseData);
+    console.log("レスポンスのrecentUpdates:", responseData.recentUpdates);
+
+    res.json(responseData);
+  } catch (error) {
+    console.error("自己分析データ取得エラー:", error);
+    res.status(500).json({ error: "自己分析データ取得に失敗しました" });
+  }
+};
+
+// 他のコントローラー関数も追加
 export const getAllMembers = (req, res) => {
   try {
     const users = dataStore.getUsers();
+    const allUserSkills = dataStore.getAllUserSkills();
 
     const membersWithSkills = users.map((user) => {
-      const { password, ...userInfo } = user;
-      const userSkills = dataStore.getUserSkillsWithDetails(user.id);
+      const userSkillsList = dataStore.getUserSkillsWithDetails(user.id);
+
+      // 統計計算
+      const skillCount = userSkillsList.length;
+      const averageLevel =
+        skillCount > 0
+          ? (
+              userSkillsList.reduce((sum, skill) => sum + skill.level, 0) /
+              skillCount
+            ).toFixed(1)
+          : "0.0";
+      const totalExperience = userSkillsList.reduce(
+        (sum, skill) => sum + skill.yearsOfExperience,
+        0
+      );
+      const mainSkills = userSkillsList
+        .filter((skill) => skill.level >= 3)
+        .map((skill) => skill.skillName)
+        .slice(0, 5);
 
       return {
-        ...userInfo,
-        skills: userSkills,
-        skillCount: userSkills.length,
-        averageLevel:
-          userSkills.length > 0
-            ? (
-                userSkills.reduce((sum, skill) => sum + skill.level, 0) /
-                userSkills.length
-              ).toFixed(1)
-            : 0,
-        totalExperience: userSkills.reduce(
-          (sum, skill) => sum + skill.yearsOfExperience,
-          0
-        ),
-        mainSkills: userSkills
-          .sort((a, b) => b.level - a.level)
-          .slice(0, 5)
-          .map((skill) => skill.skillName),
+        id: user.id,
+        name: user.name,
+        studentId: user.studentId,
+        grade: user.grade,
+        faculty: user.faculty,
+        department: user.department,
+        skills: userSkillsList,
+        skillCount,
+        averageLevel,
+        totalExperience,
+        mainSkills,
+        bio: user.bio || "",
+        profileImg: user.profileImg,
+        github: user.github || "",
+        sns: user.sns || "",
+        linkedinUrl: user.linkedinUrl || "",
+        websiteUrl: user.websiteUrl || "",
+        portfolioUrl: user.portfolioUrl || "",
+        interests: user.interests || [],
       };
     });
 
     res.json({
       members: membersWithSkills,
-      totalMembers: membersWithSkills.length,
       message: "メンバー一覧を取得しました",
     });
   } catch (error) {
-    console.error("メンバー一覧取得エラー:", error);
-    res.status(500).json({ error: "メンバー一覧取得に失敗しました" });
+    console.error("メンバー取得エラー:", error);
+    res.status(500).json({ error: "メンバー情報の取得に失敗しました" });
   }
 };
 
-// スキル統計情報を取得
 export const getSkillStatistics = (req, res) => {
   try {
-    const allUserSkills = dataStore.getAllUserSkills();
     const allSkills = dataStore.getAllSkills();
-    const allUsers = dataStore.getUsers();
-
-    // スキル別統計
-    const skillStats = {};
-    allSkills.forEach((skill) => {
-      const userSkillsForThisSkill = allUserSkills.filter(
-        (us) => us.skillId === skill.id
-      );
-      skillStats[skill.id] = {
-        skillName: skill.name,
-        category: skill.category,
-        userCount: userSkillsForThisSkill.length,
-        penetrationRate: (
-          (userSkillsForThisSkill.length / allUsers.length) *
-          100
-        ).toFixed(1),
-        averageLevel:
-          userSkillsForThisSkill.length > 0
-            ? (
-                userSkillsForThisSkill.reduce((sum, us) => sum + us.level, 0) /
-                userSkillsForThisSkill.length
-              ).toFixed(1)
-            : 0,
-        averageExperience:
-          userSkillsForThisSkill.length > 0
-            ? (
-                userSkillsForThisSkill.reduce(
-                  (sum, us) => sum + us.yearsOfExperience,
-                  0
-                ) / userSkillsForThisSkill.length
-              ).toFixed(1)
-            : 0,
-        levelDistribution: {
-          1: userSkillsForThisSkill.filter((us) => us.level === 1).length,
-          2: userSkillsForThisSkill.filter((us) => us.level === 2).length,
-          3: userSkillsForThisSkill.filter((us) => us.level === 3).length,
-          4: userSkillsForThisSkill.filter((us) => us.level === 4).length,
-          5: userSkillsForThisSkill.filter((us) => us.level === 5).length,
-        },
-      };
-    });
-
-    // カテゴリ別統計
-    const categoryStats = {};
-    allSkills.forEach((skill) => {
-      if (!categoryStats[skill.category]) {
-        categoryStats[skill.category] = {
-          skillCount: 0,
-          totalUserSkillCount: 0,
-          averagePenetration: 0,
-          skills: [],
-        };
-      }
-      categoryStats[skill.category].skillCount++;
-      categoryStats[skill.category].totalUserSkillCount +=
-        skillStats[skill.id].userCount;
-      categoryStats[skill.category].skills.push(skillStats[skill.id]);
-    });
-
-    // カテゴリの平均普及率を計算
-    Object.keys(categoryStats).forEach((category) => {
-      const categoryData = categoryStats[category];
-      const totalPenetration = categoryData.skills.reduce(
-        (sum, skill) => sum + parseFloat(skill.penetrationRate),
-        0
-      );
-      categoryData.averagePenetration = (
-        totalPenetration / categoryData.skills.length
-      ).toFixed(1);
-    });
-
-    // 推奨スキル（普及率が高いが自分が持っていないスキル）
-    const currentUserId = req.user.id;
-    const mySkills = dataStore
-      .getUserSkills(currentUserId)
-      .map((us) => us.skillId);
-
-    const recommendedSkills = Object.values(skillStats)
-      .filter((skill) => {
-        const skillId = Object.keys(skillStats).find(
-          (id) => skillStats[id] === skill
-        );
-        return (
-          !mySkills.includes(parseInt(skillId)) &&
-          parseFloat(skill.penetrationRate) > 30
-        );
-      })
-      .sort(
-        (a, b) => parseFloat(b.penetrationRate) - parseFloat(a.penetrationRate)
-      )
-      .slice(0, 10);
+    const allUserSkills = dataStore.getAllUserSkills();
 
     res.json({
-      skillStatistics: skillStats,
-      categoryStatistics: categoryStats,
-      recommendedSkills,
       totalSkills: allSkills.length,
-      totalUsers: allUsers.length,
-      message: "スキル統計を取得しました",
+      totalUserSkills: allUserSkills.length,
+      message: "統計情報を取得しました",
     });
   } catch (error) {
-    console.error("スキル統計取得エラー:", error);
-    res.status(500).json({ error: "スキル統計取得に失敗しました" });
+    console.error("統計情報取得エラー:", error);
+    res.status(500).json({ error: "統計情報の取得に失敗しました" });
   }
 };
 
-// 自分と他のメンバーとのスキル比較
 export const getSkillComparison = (req, res) => {
   try {
-    const currentUserId = req.user.id;
     const { targetUserId } = req.params;
-
-    if (!targetUserId) {
-      return res.status(400).json({ error: "比較対象のユーザーIDが必要です" });
-    }
-
-    const currentUser = dataStore.getUserById(currentUserId);
-    const targetUser = dataStore.getUserById(parseInt(targetUserId));
-
-    if (!targetUser) {
-      return res
-        .status(404)
-        .json({ error: "比較対象のユーザーが見つかりません" });
-    }
+    const currentUserId = req.user.id;
 
     const currentUserSkills = dataStore.getUserSkillsWithDetails(currentUserId);
     const targetUserSkills = dataStore.getUserSkillsWithDetails(
       parseInt(targetUserId)
     );
 
-    // 共通スキル
-    const commonSkills = currentUserSkills
-      .filter((mySkill) =>
-        targetUserSkills.some(
-          (theirSkill) => theirSkill.skillId === mySkill.skillId
-        )
-      )
-      .map((mySkill) => {
-        const theirSkill = targetUserSkills.find(
-          (ts) => ts.skillId === mySkill.skillId
-        );
-        return {
-          skillName: mySkill.skillName,
-          category: mySkill.skillCategory,
-          myLevel: mySkill.level,
-          theirLevel: theirSkill.level,
-          myExperience: mySkill.yearsOfExperience,
-          theirExperience: theirSkill.yearsOfExperience,
-          levelDifference: mySkill.level - theirSkill.level,
-        };
-      });
-
-    // 私だけが持つスキル
-    const myUniqueSkills = currentUserSkills.filter(
-      (mySkill) =>
-        !targetUserSkills.some(
-          (theirSkill) => theirSkill.skillId === mySkill.skillId
-        )
-    );
-
-    // 相手だけが持つスキル
-    const theirUniqueSkills = targetUserSkills.filter(
-      (theirSkill) =>
-        !currentUserSkills.some(
-          (mySkill) => mySkill.skillId === theirSkill.skillId
-        )
-    );
-
     res.json({
-      currentUser: {
-        id: currentUser.id,
-        name: currentUser.name,
-        skillCount: currentUserSkills.length,
-        averageLevel:
-          currentUserSkills.length > 0
-            ? (
-                currentUserSkills.reduce((sum, skill) => sum + skill.level, 0) /
-                currentUserSkills.length
-              ).toFixed(1)
-            : 0,
-      },
-      targetUser: {
-        id: targetUser.id,
-        name: targetUser.name,
-        skillCount: targetUserSkills.length,
-        averageLevel:
-          targetUserSkills.length > 0
-            ? (
-                targetUserSkills.reduce((sum, skill) => sum + skill.level, 0) /
-                targetUserSkills.length
-              ).toFixed(1)
-            : 0,
-      },
-      comparison: {
-        commonSkills,
-        myUniqueSkills,
-        theirUniqueSkills,
-        commonSkillCount: commonSkills.length,
-      },
-      message: "スキル比較を取得しました",
+      currentUserSkills,
+      targetUserSkills,
+      message: "スキル比較データを取得しました",
     });
   } catch (error) {
-    console.error("スキル比較取得エラー:", error);
-    res.status(500).json({ error: "スキル比較取得に失敗しました" });
+    console.error("スキル比較エラー:", error);
+    res.status(500).json({ error: "スキル比較データの取得に失敗しました" });
   }
 };
+
+function analyzeBalanceType(categoryAverages) {
+  const categories = Object.keys(categoryAverages);
+  if (categories.length === 0)
+    return {
+      type: "未分類",
+      description: "スキルが登録されていません",
+      score: "0.0",
+    };
+
+  const levels = categories.map((cat) =>
+    parseFloat(categoryAverages[cat].averageLevel)
+  );
+  const maxLevel = Math.max(...levels);
+  const minLevel = Math.min(...levels);
+  const variance = maxLevel - minLevel;
+
+  if (variance <= 1) {
+    return {
+      type: "バランス型",
+      description: "様々な分野で均等にスキルを持っています",
+      score: variance.toFixed(1),
+    };
+  } else if (variance <= 2) {
+    return {
+      type: "やや専門特化型",
+      description: "いくつかの分野で特に強みがあります",
+      score: variance.toFixed(1),
+    };
+  } else {
+    return {
+      type: "専門特化型",
+      description: "特定の分野に強みが集中しています",
+      score: variance.toFixed(1),
+    };
+  }
+}
+
+function analyzeGrowthTrends(skillHistory, userSkills) {
+  const recentHistory = skillHistory.filter((h) => {
+    const historyDate = new Date(h.timestamp);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90); // 過去3カ月
+    return historyDate > cutoff;
+  });
+
+  const categoryGrowth = {};
+
+  recentHistory.forEach((history) => {
+    const skill = userSkills.find((s) => s.skillId === history.skillId);
+    if (skill) {
+      if (!categoryGrowth[skill.skillCategory]) {
+        categoryGrowth[skill.skillCategory] = {
+          updates: 0,
+          levelUps: 0,
+          lastUpdate: history.timestamp,
+        };
+      }
+      categoryGrowth[skill.skillCategory].updates++;
+      if (
+        history.action === "update" &&
+        history.previousLevel &&
+        history.newLevel > history.previousLevel
+      ) {
+        categoryGrowth[skill.skillCategory].levelUps++;
+      }
+    }
+  });
+
+  return categoryGrowth;
+}
+
+// 伸びしろ分析
+function analyzePotential(userSkills) {
+  const highExperienceLowLevel = userSkills.filter(
+    (skill) => skill.yearsOfExperience >= 2 && skill.level <= 3
+  );
+
+  const recentlyUntouched = userSkills.filter((skill) => {
+    const updateDate = new Date(skill.updatedAt);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 180); // 過去6カ月
+    return updateDate < cutoff;
+  });
+
+  return {
+    highExperienceLowLevel,
+    recentlyUntouched,
+    recommendations: [
+      ...highExperienceLowLevel.map((skill) => ({
+        type: "level_up",
+        skill: skill.skillName,
+        message: `${skill.skillName}は${skill.yearsOfExperience}年の経験があります。レベルアップしましょう！`,
+      })),
+      ...recentlyUntouched.slice(0, 3).map((skill) => ({
+        type: "refresh",
+        skill: skill.skillName,
+        message: `${skill.skillName}は最近更新されていません。スキルを見直しましょう！`,
+      })),
+    ],
+  };
+}
