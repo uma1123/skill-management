@@ -7,6 +7,9 @@ let nextId = 1;
 // ユーザースキル
 let userSkills = [];
 
+// スキル更新記録
+let skillHistory = [];
+
 export const dataStore = {
   // ユーザー情報
   getUsers: () => users,
@@ -121,6 +124,9 @@ export const dataStore = {
         us.skillId === parseInt(skillData.skillId)
     );
 
+    const previousSkill =
+      existingIndex !== -1 ? userSkills[existingIndex] : null;
+
     const newUserSkill = {
       userId: parseInt(userId),
       skillId: parseInt(skillData.skillId),
@@ -134,6 +140,31 @@ export const dataStore = {
       updatedAt: new Date().toISOString(),
     };
 
+    // 履歴を記録
+    if (previousSkill) {
+      skillHistory.push({
+        id: skillHistory.length + 1,
+        userId: parseInt(userId),
+        skillId: parseInt(skillData.skillId),
+        action: "update",
+        previousLevel: previousSkill.level,
+        newLevel: newUserSkill.level,
+        previousExperience: previousSkill.yearsOfExperience,
+        newExperience: parseFloat(skillData.yearsOfExperience || 0),
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      skillHistory.push({
+        id: skillHistory.length + 1,
+        userId: parseInt(userId),
+        skillId: parseInt(skillData.skillId),
+        action: "add",
+        newLevel: newUserSkill.level,
+        newExperience: parseFloat(skillData.yearsOfExperience || 0),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     if (existingIndex !== -1) {
       // 更新
       userSkills[existingIndex] = newUserSkill;
@@ -143,6 +174,72 @@ export const dataStore = {
     }
 
     return newUserSkill;
+  },
+
+  // スキル履歴取得
+  getSkillHistory: (userId) => {
+    return skillHistory
+      .filter((h) => h.userId === parseInt(userId))
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+  },
+
+  // 最近の更新スキル取得
+  getRecentSkillUpdates: (userId, days = 30) => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    return userSkills
+      .filter(
+        (us) =>
+          us.userId === parseInt(userId) && new Date(us.updatedAt) > cutoffDate
+      )
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  },
+
+  // 最近の更新スキル取得（詳細情報付き）
+  getRecentSkillUpdates: (userId, days = 30) => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    console.log("最近の更新スキル取得:", { userId, days, cutoffDate });
+
+    const recentSkills = userSkills
+      .filter((us) => {
+        const isCorrectUser = us.userId === parseInt(userId);
+        const isRecent = new Date(us.updatedAt) > cutoffDate;
+        console.log("スキルチェック:", {
+          skillId: us.skillId,
+          userId: us.userId,
+          updatedAt: us.updatedAt,
+          isCorrectUser,
+          isRecent,
+        });
+        return isCorrectUser && isRecent;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+
+    console.log("フィルタ後の最近のスキル:", recentSkills);
+
+    // スキル詳細情報を追加
+    const recentSkillsWithDetails = recentSkills.map((userSkill) => {
+      const skillDetails = allSkills.find((s) => s.id === userSkill.skillId);
+      console.log(`スキルID ${userSkill.skillId} の詳細:`, skillDetails);
+
+      return {
+        ...userSkill,
+        skillName: skillDetails?.name || "不明なスキル",
+        skillCategory: skillDetails?.category || "その他",
+      };
+    });
+
+    console.log("詳細付き最近のスキル:", recentSkillsWithDetails);
+    return recentSkillsWithDetails;
   },
 
   // ユーザースキル削除
@@ -163,9 +260,6 @@ export const dataStore = {
 
   // ユーザーIDでユーザーを取得
   getUserById: (userId) => users.find((user) => user.id === userId),
-
-  // 全ユーザーを取得
-  getUsers: () => users,
 
   getNextId: () => nextId,
   setNextId: (id) => {
