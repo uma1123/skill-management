@@ -118,9 +118,6 @@ export default function AnalyticsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("取得した分析データ:", data);
-        console.log("recentUpdates:", data.recentUpdates);
-        console.log("recentUpdatesの最初の要素:", data.recentUpdates[0]);
         setAnalysisData(data);
       } else {
         console.error("API応答エラー:", response.status);
