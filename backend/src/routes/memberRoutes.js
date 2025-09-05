@@ -3,6 +3,7 @@ import {
   getAllMembers,
   getSkillComparison,
   getSkillStatistics,
+  getSelfAnalysis,
 } from "../controllers/memberController.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -16,5 +17,8 @@ router.get("/statistics", requireAuth, getSkillStatistics);
 
 // スキル比較取得
 router.get("/compare/:targetUserId", requireAuth, getSkillComparison);
+
+// 自己分析データ取得
+router.get("/self-analysis", requireAuth, getSelfAnalysis);
 
 export default router;
