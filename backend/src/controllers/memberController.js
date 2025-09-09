@@ -82,7 +82,45 @@ export const getSelfAnalysis = async (req, res) => {
   }
 };
 
-// 他のコントローラー関数も追加
+export const getMemberDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prismaDataStore.findUserById(id);
+    if (!user) {
+      return res.status(404).json({ error: "ユーザーが見つかりません" });
+    }
+    const skills = await prismaDataStore.getUserSkillsWithDetails(id);
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      studentId: user.studentId,
+      grade: user.grade,
+      faculty: user.faculty,
+      department: user.department,
+      bio: user.bio || "",
+      profileImg: user.profileImg || null,
+      github: user.github || "",
+      sns: user.sns || "",
+      linkedinUrl: user.linkedinUrl || "",
+      websiteUrl: user.websiteUrl || "",
+      portfolioUrl: user.portfolioUrl || "",
+      interests: user.interests || [],
+      skills: skills.map((us) => ({
+        id: us.skillId,
+        name: us.skill?.name || "",
+        category: us.skill?.category || "",
+        level: us.level,
+        yearsOfExperience: us.yearsOfExperience,
+        description: us.description,
+      })),
+    });
+  } catch (error) {
+    console.error("メンバー詳細取得エラー:", error);
+    res.status(500).json({ error: "メンバー詳細の取得に失敗しました" });
+  }
+};
+
 export const getAllMembers = async (req, res) => {
   try {
     const users = await prismaDataStore.getUsers();
