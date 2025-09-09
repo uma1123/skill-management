@@ -102,6 +102,7 @@ export default function Login() {
         clearLoginForm();
 
         // TODO: ダッシュボードページにリダイレクト
+        router.push("/dashboard");
       }
     } catch (error) {
       console.error("Error:", error);
