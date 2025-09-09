@@ -4,6 +4,7 @@ import {
   getSkillComparison,
   getSkillStatistics,
   getSelfAnalysis,
+  getMemberDetail,
 } from "../controllers/memberController.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -20,5 +21,8 @@ router.get("/compare/:targetUserId", requireAuth, getSkillComparison);
 
 // 自己分析データ取得
 router.get("/self-analysis", requireAuth, getSelfAnalysis);
+
+// 特定メンバー詳細取得
+router.get("/:id", requireAuth, getMemberDetail);
 
 export default router;
