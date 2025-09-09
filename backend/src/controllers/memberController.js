@@ -1,37 +1,47 @@
-import { dataStore } from "../utils/dataStore.js";
+import { prismaDataStore } from "../utils/prismaDataStore.js";
 
 // 自己分析用データ取得
-export const getSelfAnalysis = (req, res) => {
+export const getSelfAnalysis = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log("自己分析データ取得 - ユーザーID:", userId);
+    const userSkillsRaw = await prismaDataStore.getUserSkillsWithDetails(
+      userId
+    );
 
-    const userSkills = dataStore.getUserSkillsWithDetails(userId);
-    console.log("取得したユーザースキル:", userSkills);
+    // skillName, skillCategoryを必ず展開
+    const userSkills = userSkillsRaw.map((us) => ({
+      ...us,
+      skillName: us.skill?.name || "",
+      skillCategory: us.skill?.category || "未分類",
+    }));
 
-    const skillHistory = dataStore.getSkillHistory(userId);
-
-    // getRecentSkillUpdatesは既に詳細情報が含まれている
-    const recentUpdates = dataStore.getRecentSkillUpdates(userId, 30);
-    console.log("最近の更新スキル（詳細付き）:", recentUpdates);
+    const skillHistory = await prismaDataStore.getSkillHistory(userId);
+    const recentUpdatesRaw = await prismaDataStore.getRecentSkillUpdates(
+      userId,
+      30
+    );
+    const recentUpdates = recentUpdatesRaw.map((us) => ({
+      ...us,
+      skillName: us.skill?.name || "",
+      skillCategory: us.skill?.category || "未分類",
+    }));
 
     // カテゴリ別平均レベル
     const categoryAverages = {};
-
     userSkills.forEach((skill) => {
-      if (!categoryAverages[skill.skillCategory]) {
-        categoryAverages[skill.skillCategory] = {
+      const category = skill.skillCategory || "未分類";
+      if (!categoryAverages[category]) {
+        categoryAverages[category] = {
           totalLevel: 0,
           totalExperience: 0,
           count: 0,
           skills: [],
         };
       }
-      categoryAverages[skill.skillCategory].totalLevel += skill.level;
-      categoryAverages[skill.skillCategory].totalExperience +=
-        skill.yearsOfExperience;
-      categoryAverages[skill.skillCategory].count++;
-      categoryAverages[skill.skillCategory].skills.push(skill);
+      categoryAverages[category].totalLevel += skill.level;
+      categoryAverages[category].totalExperience += skill.yearsOfExperience;
+      categoryAverages[category].count++;
+      categoryAverages[category].skills.push(skill);
     });
 
     // 平均値計算
@@ -58,15 +68,12 @@ export const getSelfAnalysis = (req, res) => {
       userSkills,
       categoryAverages,
       skillHistory,
-      recentUpdates, // 既に詳細情報が含まれている
+      recentUpdates,
       balanceType,
       growthTrends,
       potentialAnalysis,
       message: "自己分析データを取得しました",
     };
-
-    console.log("レスポンスデータ:", responseData);
-    console.log("レスポンスのrecentUpdates:", responseData.recentUpdates);
 
     res.json(responseData);
   } catch (error) {
@@ -76,69 +83,68 @@ export const getSelfAnalysis = (req, res) => {
 };
 
 // 他のコントローラー関数も追加
-export const getAllMembers = (req, res) => {
+export const getAllMembers = async (req, res) => {
   try {
-    const users = dataStore.getUsers();
-    const allUserSkills = dataStore.getAllUserSkills();
+    const users = await prismaDataStore.getUsers();
 
-    const membersWithSkills = users.map((user) => {
-      const userSkillsList = dataStore.getUserSkillsWithDetails(user.id);
+    const members = await Promise.all(
+      users.map(async (user) => {
+        const userSkillsList = await prismaDataStore.getUserSkillsWithDetails(
+          user.id
+        );
 
-      // 統計計算
-      const skillCount = userSkillsList.length;
-      const averageLevel =
-        skillCount > 0
-          ? (
-              userSkillsList.reduce((sum, skill) => sum + skill.level, 0) /
-              skillCount
-            ).toFixed(1)
-          : "0.0";
-      const totalExperience = userSkillsList.reduce(
-        (sum, skill) => sum + skill.yearsOfExperience,
-        0
-      );
-      const mainSkills = userSkillsList
-        .filter((skill) => skill.level >= 3)
-        .map((skill) => skill.skillName)
-        .slice(0, 5);
+        // スキル名が空やnullでないものだけをmainSkillsに
+        const mainSkills = userSkillsList
+          .filter(
+            (skill) => skill.level >= 3 && skill.skill && skill.skill.name
+          )
+          .map((skill) => skill.skill.name)
+          .slice(0, 5);
 
-      return {
-        id: user.id,
-        name: user.name,
-        studentId: user.studentId,
-        grade: user.grade,
-        faculty: user.faculty,
-        department: user.department,
-        skills: userSkillsList,
-        skillCount,
-        averageLevel,
-        totalExperience,
-        mainSkills,
-        bio: user.bio || "",
-        profileImg: user.profileImg,
-        github: user.github || "",
-        sns: user.sns || "",
-        linkedinUrl: user.linkedinUrl || "",
-        websiteUrl: user.websiteUrl || "",
-        portfolioUrl: user.portfolioUrl || "",
-        interests: user.interests || [],
-      };
-    });
+        return {
+          id: user.id,
+          name: user.name,
+          studentId: user.studentId,
+          grade: user.grade,
+          faculty: user.faculty,
+          department: user.department,
+          skills: userSkillsList,
+          skillCount: userSkillsList.length,
+          averageLevel:
+            userSkillsList.length > 0
+              ? (
+                  userSkillsList.reduce((sum, s) => sum + s.level, 0) /
+                  userSkillsList.length
+                ).toFixed(1)
+              : "0.0",
+          totalExperience: userSkillsList.reduce(
+            (sum, s) => sum + (s.yearsOfExperience || 0),
+            0
+          ),
+          mainSkills, // ←ここ
+          bio: user.bio || "",
+          profileImg: user.profileImg || null,
+          github: user.github || "",
+          sns: user.sns || "",
+          linkedinUrl: user.linkedinUrl || "",
+          websiteUrl: user.websiteUrl || "",
+          portfolioUrl: user.portfolioUrl || "",
+          interests: user.interests || [],
+        };
+      })
+    );
 
-    res.json({
-      members: membersWithSkills,
-      message: "メンバー一覧を取得しました",
-    });
+    res.json({ members });
   } catch (error) {
-    console.error("メンバー取得エラー:", error);
-    res.status(500).json({ error: "メンバー情報の取得に失敗しました" });
+    console.error("メンバー一覧取得エラー:", error);
+    res.status(500).json({ error: "メンバー一覧の取得に失敗しました" });
   }
 };
 
-export const getSkillStatistics = (req, res) => {
+export const getSkillStatistics = async (req, res) => {
   try {
-    const allSkills = dataStore.getAllSkills();
-    const allUserSkills = dataStore.getAllUserSkills();
+    const allSkills = await prismaDataStore.getAllSkills();
+    const allUserSkills = await prismaDataStore.getAllUserSkills();
 
     res.json({
       totalSkills: allSkills.length,
@@ -151,13 +157,15 @@ export const getSkillStatistics = (req, res) => {
   }
 };
 
-export const getSkillComparison = (req, res) => {
+export const getSkillComparison = async (req, res) => {
   try {
     const { targetUserId } = req.params;
     const currentUserId = req.user.id;
 
-    const currentUserSkills = dataStore.getUserSkillsWithDetails(currentUserId);
-    const targetUserSkills = dataStore.getUserSkillsWithDetails(
+    const currentUserSkills = await prismaDataStore.getUserSkillsWithDetails(
+      currentUserId
+    );
+    const targetUserSkills = await prismaDataStore.getUserSkillsWithDetails(
       parseInt(targetUserId)
     );
 
