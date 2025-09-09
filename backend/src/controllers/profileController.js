@@ -1,9 +1,9 @@
-import { dataStore } from "../utils/dataStore.js";
+import { prismaDataStore } from "../utils/prismaDataStore.js";
 
 // 自分のプロフィール情報を取得
-export const getMyProfile = (req, res) => {
+export const getMyProfile = async (req, res) => {
   try {
-    const user = dataStore.findUserById(req.user.id);
+    const user = await prismaDataStore.findUserById(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -25,10 +25,10 @@ export const getMyProfile = (req, res) => {
 };
 
 // 他のユーザーのプロフィール情報を取得
-export const getUserProfile = (req, res) => {
+export const getUserProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = dataStore.findUserById(parseInt(userId));
+    const user = await prismaDataStore.findUserById(parseInt(userId));
 
     if (!user) {
       return res.status(404).json({
@@ -67,7 +67,7 @@ export const getUserProfile = (req, res) => {
 };
 
 // 統合されたプロフィール更新関数
-export const updateMyProfile = (req, res) => {
+export const updateMyProfile = async (req, res) => {
   try {
     const {
       // 基本情報
@@ -138,7 +138,10 @@ export const updateMyProfile = (req, res) => {
     if (interests !== undefined) updateData.interests = interests;
 
     // プロフィールを更新
-    const updatedUser = dataStore.updateUser(req.user.id, updateData);
+    const updatedUser = await prismaDataStore.updateUser(
+      req.user.id,
+      updateData
+    );
 
     if (!updatedUser) {
       return res.status(404).json({
