@@ -1,6 +1,6 @@
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { generateToken } from "../utils/jwt.js";
-import { dataStore } from "../utils/dataStore.js";
+import { prismaDataStore } from "../utils/prismaDataStore.js";
 
 // 新規登録
 export const register = async (req, res) => {
@@ -16,7 +16,8 @@ export const register = async (req, res) => {
     }
 
     // 学籍番号の重複チェック
-    if (dataStore.findUserByStudentId(studentId)) {
+    const existingUser = await prismaDataStore.findUserByStudentId(studentId);
+    if (existingUser) {
       return res.status(400).json({
         error: "この学籍番号はすでに登録されています",
         message: "登録に失敗しました",
@@ -35,10 +36,11 @@ export const register = async (req, res) => {
       department,
       password: hashedPassword,
       createdAt: new Date().toISOString(),
+      username: name,
     };
 
-    // dataStoreを使用してユーザーを追加
-    const user = dataStore.addUser(userData);
+    // prismaDataStoreを使用してユーザーを追加
+    const user = await prismaDataStore.addUser(userData);
 
     // JWTトークンを生成
     const token = generateToken({
@@ -76,7 +78,7 @@ export const login = async (req, res) => {
     }
 
     // ユーザー検索
-    const user = dataStore.findUserByStudentId(studentId);
+    const user = await prismaDataStore.findUserByStudentId(studentId);
 
     if (!user) {
       return res.status(401).json({
@@ -118,9 +120,9 @@ export const login = async (req, res) => {
 };
 
 // 現在のユーザー情報取得
-export const getMe = (req, res) => {
+export const getMe = async (req, res) => {
   try {
-    const user = dataStore.findUserById(req.user?.id);
+    const user = await prismaDataStore.findUserById(req.user?.id);
 
     if (!user) {
       return res.status(404).json({
