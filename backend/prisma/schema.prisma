@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  name        String   // 氏名（必須）
+  grade       Int      // 学年（必須）
+  studentId   String   @unique // 学籍番号（必須）
+  faculty     String   // 学部（必須）
+  department  String   // 学科（必須）
+  password    String   // パスワード（必須・ハッシュ化）
+  createdAt   DateTime @default(now()) // 登録日時（必須）
+  username    String   @unique // ユーザー名（必須、氏名と同じ値でOK）
+
+  // 以下は任意（nullable）フィールド
+  bio         String?
+  avatar      String?
+  profileImg  String?
+  github      String?
+  sns         String?
+  linkedinUrl String?
+  websiteUrl  String?
+  portfolioUrl String?
+  interests   String[] // 配列型（任意）
+  updatedAt   DateTime @updatedAt
+
+  // リレーション
+  userSkills      UserSkill[]
+  skillHistories  SkillHistory[]
+  reflectionMemos ReflectionMemo[]
+
+  @@map("users")
+}
+
+model Skill {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  category    String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // リレーション
+  userSkills     UserSkill[]
+  skillHistories SkillHistory[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  skillId           Int
+  level             Int      @default(1) // 1-5のレベル
+  yearsOfExperience Float    @default(0)
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // リレーション
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  // 複合ユニークキー
+  @@unique([userId, skillId])
+  @@map("user_skills")
+}
+
+model SkillHistory {
+  id                 Int       @id @default(autoincrement())
+  userId             Int
+  skillId            Int
+  action             String    // "add", "update", "delete"
+  previousLevel      Int?
+  newLevel           Int
+  previousExperience Float?
+  newExperience      Float
+  description        String?
+  timestamp          DateTime  @default(now())
+
+  // リレーション
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@map("skill_histories")
+}
+
+model ReflectionMemo {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reflection_memos")
+}
+
+// 管理者用テーブル（将来的な拡張）
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  color       String?  // UIでの表示色
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("categories")
+}
+
+// システム設定（将来的な拡張）
+model SystemSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
