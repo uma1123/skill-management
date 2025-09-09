@@ -1,10 +1,10 @@
-import { dataStore } from "../utils/dataStore.js";
+import { prismaDataStore } from "../utils/prismaDataStore.js";
 
 // 全スキル一覧取得
-export const getSkills = (req, res) => {
+export const getSkills = async (req, res) => {
   try {
-    const skills = dataStore.getAllSkills();
-    const skillsByCategory = dataStore.getSkillsByCategory();
+    const skills = await prismaDataStore.getAllSkills();
+    const skillsByCategory = await prismaDataStore.getSkillsByCategory();
 
     res.json({
       skills,
@@ -17,13 +17,18 @@ export const getSkills = (req, res) => {
   }
 };
 
-export const getMySkills = (req, res) => {
+export const getMySkills = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userSkills = dataStore.getUserSkillsWithDetails(userId);
+    const userSkills = await prismaDataStore.getUserSkillsWithDetails(userId);
 
+    const userSkillsWithNames = userSkills.map((us) => ({
+      ...us,
+      skillName: us.skill?.name || "",
+      skillCategory: us.skill?.category || "",
+    }));
     res.json({
-      skills: userSkills,
+      skills: userSkillsWithNames,
       message: "スキル一覧を取得しました",
     });
   } catch (error) {
@@ -32,7 +37,7 @@ export const getMySkills = (req, res) => {
   }
 };
 
-export const addOrUpdateSkill = (req, res) => {
+export const addOrUpdateSkill = async (req, res) => {
   try {
     const userId = req.user.id;
     const { skillId, level, yearsOfExperience, description } = req.body; // 変数名を修正
@@ -47,12 +52,12 @@ export const addOrUpdateSkill = (req, res) => {
         .json({ error: "レベルは1から5の範囲で指定してください" });
     }
 
-    const skill = dataStore.getSkillById(skillId);
+    const skill = await prismaDataStore.getSkillById(skillId);
     if (!skill) {
       return res.status(404).json({ error: "指定されたスキルが存在しません" });
     }
 
-    const userSkill = dataStore.addOrUpdateUserSkill(userId, {
+    const userSkill = await prismaDataStore.addOrUpdateUserSkill(userId, {
       // 変数名を修正
       skillId,
       level,
@@ -74,12 +79,12 @@ export const addOrUpdateSkill = (req, res) => {
   }
 };
 
-export const removeSkill = (req, res) => {
+export const removeSkill = async (req, res) => {
   try {
     const userId = req.user.id;
     const { skillId } = req.params;
 
-    const removedSkill = dataStore.removeUserSkill(userId, skillId); // 変数名と引数を修正
+    const removedSkill = await prismaDataStore.removeUserSkill(userId, skillId); // 変数名と引数を修正
 
     if (!removedSkill) {
       // 変数名を修正
@@ -96,7 +101,7 @@ export const removeSkill = (req, res) => {
   }
 };
 
-export const updateMultipleSkills = (req, res) => {
+export const updateMultipleSkills = async (req, res) => {
   try {
     const userId = req.user.id;
     const { skills } = req.body;
@@ -110,30 +115,31 @@ export const updateMultipleSkills = (req, res) => {
     const updatedSkills = [];
     const errors = [];
 
-    skills.forEach((skillData, index) => {
+    for (let index = 0; index < skills.length; index++) {
+      const skillData = skills[index];
       try {
         const { skillId, level, yearsOfExperience, description } = skillData;
 
         // バリデーション
         if (!skillId || !level) {
           errors.push(`スキル${index + 1}: スキルIDとレベルは必須です`);
-          return;
+          continue;
         }
 
         if (level < 1 || level > 5) {
           errors.push(
             `スキル${index + 1}: レベルは1〜5の範囲で入力してください`
           );
-          return;
+          continue;
         }
 
-        const skill = getSkillById(skillId);
+        const skill = await prismaDataStore.getSkillById(skillId);
         if (!skill) {
           errors.push(`スキル${index + 1}: 指定されたスキルが見つかりません`);
-          return;
+          continue;
         }
 
-        const userSkill = dataStore.addOrUpdateUserSkill(userId, {
+        const userSkill = await prismaDataStore.addOrUpdateUserSkill(userId, {
           skillId,
           level,
           yearsOfExperience: yearsOfExperience || 0,
@@ -148,7 +154,7 @@ export const updateMultipleSkills = (req, res) => {
       } catch (err) {
         errors.push(`スキル${index + 1}: ${err.message}`);
       }
-    });
+    }
 
     if (errors.length > 0) {
       return res.status(400).json({
