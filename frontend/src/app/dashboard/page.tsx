@@ -34,7 +34,6 @@ interface Member {
   grade: number;
   faculty: string;
   department: string;
-  email: string;
   skills: UserSkill[];
   skillCount: number;
   averageLevel: string;
@@ -224,7 +223,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 統計情報カード */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -242,33 +241,6 @@ export default function DashboardPage() {
                 {members.reduce((sum, member) => sum + member.skillCount, 0)}
               </div>
               <p className="text-xs text-muted-foreground">総スキル登録数</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {allSkills.length}
-              </div>
-              <p className="text-xs text-muted-foreground">ユニークスキル数</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {members.length > 0
-                  ? (
-                      members.reduce(
-                        (sum, member) => sum + member.skillCount,
-                        0
-                      ) / members.length
-                    ).toFixed(1)
-                  : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">平均スキル数</p>
             </div>
           </CardContent>
         </Card>
@@ -313,27 +285,34 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                {member.mainSkills.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">主なスキル:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {member.mainSkills.slice(0, 3).map((skill) => (
-                        <Badge
-                          key={skill}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                      {member.mainSkills.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{member.mainSkills.length - 3}個
-                        </Badge>
-                      )}
+                {Array.isArray(member.mainSkills) &&
+                  member.mainSkills.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">主なスキル:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {member.mainSkills
+                          .filter(
+                            (skill): skill is string =>
+                              typeof skill === "string" && skill !== ""
+                          )
+                          .slice(0, 3)
+                          .map((skill) => (
+                            <Badge
+                              key={skill}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {skill}
+                            </Badge>
+                          ))}
+                        {member.mainSkills.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{member.mainSkills.length - 3}個
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {member.totalExperience > 0 && (
                   <p className="text-xs text-gray-500">
