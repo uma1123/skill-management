@@ -123,7 +123,9 @@ export default function SkillsPage() {
   // 全スキル取得
   const fetchSkills = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/skills");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/skills`
+      );
       if (response.ok) {
         const data = await response.json();
         setAllSkills(data.skills);
@@ -144,11 +146,14 @@ export default function SkillsPage() {
         return;
       }
 
-      const response = await fetch("http://localhost:3001/api/skills/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/skills/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -181,19 +186,22 @@ export default function SkillsPage() {
         return;
       }
 
-      const response = await fetch("http://localhost:3001/api/skills/me", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          skillId: parseInt(selectedSkillId),
-          level: parseInt(selectedLevel),
-          yearsOfExperience: parseFloat(selectedYears) || 0,
-          description: selectedDescription,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/skills/me`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            skillId: parseInt(selectedSkillId),
+            level: parseInt(selectedLevel),
+            yearsOfExperience: parseFloat(selectedYears) || 0,
+            description: selectedDescription,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -241,19 +249,22 @@ export default function SkillsPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3001/api/skills/me", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          skillId: editingSkillId,
-          level: parseInt(editForm.level),
-          yearsOfExperience: parseFloat(editForm.yearsOfExperience) || 0,
-          description: editForm.description,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/skills/me`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            skillId: editingSkillId,
+            level: parseInt(editForm.level),
+            yearsOfExperience: parseFloat(editForm.yearsOfExperience) || 0,
+            description: editForm.description,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -279,7 +290,7 @@ export default function SkillsPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:3001/api/skills/me/${skillId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/skills/me/${skillId}`,
         {
           method: "DELETE",
           headers: {

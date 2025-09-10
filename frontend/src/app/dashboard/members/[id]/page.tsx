@@ -45,7 +45,7 @@ export default function MemberDetailPage() {
 
         // 直接バックエンドAPIを呼び出し
         const response = await fetch(
-          `http://localhost:3001/api/members/${params.id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/members/${params.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
 
       console.log("分析データを取得中...");
       const response = await fetch(
-        "http://localhost:3001/api/members/self-analysis",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/members/self-analysis`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
