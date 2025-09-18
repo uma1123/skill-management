@@ -20,7 +20,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ミドルウェア
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://skill-management-lemon.vercel.app"],
+  })
+);
 app.use(bodyParser.json());
 
 // ルートを設定
