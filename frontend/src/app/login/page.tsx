@@ -41,20 +41,23 @@ export default function Login() {
 
     try {
       // 新しいエンドポイントに変更
-      const res = await fetch("http://localhost:3001/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          grade,
-          studentId,
-          faculty,
-          department,
-          password,
-        }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            grade,
+            studentId,
+            faculty,
+            department,
+            password,
+          }),
+        }
+      );
 
       const data = await res.json();
       console.log("Response:", data);
@@ -81,16 +84,19 @@ export default function Login() {
 
     try {
       // 新しいエンドポイントに変更
-      const res = await fetch("http://localhost:3001/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          studentId: loginStudentId,
-          password: loginPassword,
-        }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            studentId: loginStudentId,
+            password: loginPassword,
+          }),
+        }
+      );
 
       const data = await res.json();
       console.log("Login Response:", data);
