@@ -74,7 +74,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
             <p className="text-sm font-medium text-white truncate">
               {user.name}
             </p>
-            <p className="text-xs text-slate-400 truncate">{user.grade}年生</p>
+            <p className="text-xs text-slate-400 truncate">{user.studentId}</p>
           </div>
         </div>
       </div>
