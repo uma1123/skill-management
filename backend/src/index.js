@@ -23,6 +23,8 @@ const PORT = process.env.PORT || 3001;
 app.use(
   cors({
     origin: ["https://skill-management-lemon.vercel.app"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
 app.use(bodyParser.json());
