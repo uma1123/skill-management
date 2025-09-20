@@ -19,9 +19,7 @@ export default function Header({ user }: HeaderProps) {
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            サークルスキル管理
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">スキル管理</h1>
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-sm text-gray-600">{user.name}さん</span>
