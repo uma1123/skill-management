@@ -48,6 +48,7 @@ export default function ProfilePage() {
     websiteUrl: "",
     portfolioUrl: "",
     interests: [] as string[],
+    studentId: "", // 追加
   });
 
   // 新しい興味分野の入力
@@ -92,6 +93,7 @@ export default function ProfilePage() {
           websiteUrl: data.profile.websiteUrl || "",
           portfolioUrl: data.profile.portfolioUrl || "",
           interests: data.profile.interests || [],
+          studentId: data.profile.studentId, // 追加
         });
       } else {
         const errorData = await res.json();
@@ -118,6 +120,7 @@ export default function ProfilePage() {
       const updateData = {
         ...formData,
         grade: parseInt(formData.grade),
+        studentId: formData.studentId, // 追加
       };
 
       const res = await fetch(
@@ -165,6 +168,7 @@ export default function ProfilePage() {
         websiteUrl: profile.websiteUrl || "",
         portfolioUrl: profile.portfolioUrl || "",
         interests: profile.interests || [],
+        studentId: profile.studentId, // 追加
       });
     }
   };
@@ -315,9 +319,19 @@ export default function ProfilePage() {
                     <Label className="text-sm font-medium text-gray-700">
                       学籍番号
                     </Label>
-                    <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-md">
-                      {profile.studentId}
-                    </p>
+                    {editing ? (
+                      <Input
+                        value={formData.studentId}
+                        onChange={(e) =>
+                          handleInputChange("studentId", e.target.value)
+                        }
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-md">
+                        {profile.studentId}
+                      </p>
+                    )}
                   </div>
 
                   {/* 学部・学科 */}
