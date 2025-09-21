@@ -57,6 +57,14 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
+
+    if (error.code === "P2002" && error.meta.target.includes("studentId")) {
+      console.error("重複エラー: ", req.body.studentId);
+      return res
+        .status(400)
+        .json({ error: "この学生IDは既に登録されています。" });
+    }
+
     res.status(500).json({
       error: "登録中にエラーが発生しました",
       message: "登録に失敗しました",
